@@ -28,7 +28,7 @@ export function buildPlainTextExportFromReport(
 
   const lines: string[] = [
     TXT_DOUBLE,
-    'FACT2LINKEDIN EXPORT',
+    'KAWN CONTENT CREATOR AGENT — EXPORT',
     TXT_DOUBLE,
     '',
     'EXPORT TIMESTAMP',
@@ -77,7 +77,7 @@ export function buildPlainTextExportFromReport(
   }
 
   lines.push(
-    'GENERATED POSTS',
+    'GENERATED KAWN POSTS',
     TXT_SINGLE,
     ...formatPostsPlainExport(report.posts, go.postStyles)
   );
@@ -95,7 +95,7 @@ export function buildMarkdownExportFromReport(
   const go = report.generationOptions;
 
   const lines: string[] = [
-    '# Fact2LinkedIn export',
+    '# KAWN Content Creator Agent — export',
     '',
     '> Browser-only export — no data is sent to a server for storage.',
     '',
@@ -170,7 +170,7 @@ export function buildMarkdownExportFromReport(
     lines.push('---', '', '## Issues & warnings', '', ...formatIssuesMarkdown(report.issues), '');
   }
 
-  lines.push('---', '', '## Generated posts', '');
+  lines.push('---', '', '## Generated KAWN Posts', '');
 
   report.posts.forEach((raw, i) => {
     const body = stripHtmlTags(raw ?? '').trimEnd();
@@ -342,5 +342,5 @@ export function downloadTextFile(filename: string, content: string, mimeType: st
 
 export function exportFilename(extension: 'txt' | 'md'): string {
   const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  return `fact2linkedin-export-${stamp}.${extension}`;
+  return `kawn-content-creator-agent-export-${stamp}.${extension}`;
 }

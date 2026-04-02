@@ -91,7 +91,7 @@ export function ExportPosts({ runReport }: ExportPostsProps) {
           {copiedAll ? (
             <span className="text-emerald-700">Copied all</span>
           ) : (
-            'Copy all posts'
+            'Copy all KAWN Posts'
           )}
         </button>
       </div>

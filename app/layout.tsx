@@ -2,8 +2,9 @@ import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
-  title: 'Fact2LinkedIn',
-  description: 'Turn a topic into facts and sample LinkedIn posts.'
+  title: 'KAWN Content Creator Agent',
+  description:
+    'Turn a topic into researched facts and KAWN-ready post drafts — research, review, generate, export.'
 };
 
 export default function RootLayout({

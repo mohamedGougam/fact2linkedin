@@ -14,7 +14,7 @@ function researchLabel(mode: 'mock' | 'web'): string {
 }
 
 /**
- * Full “draft → publish” bundle: topic, settings, brief, warnings, facts, sources, posts.
+ * Full “draft → KAWN publishing” bundle: topic, settings, brief, warnings, facts, sources, KAWN Posts.
  * Shown when drafts exist; complements file export (same underlying report).
  */
 export function DraftToPublishPackage({ runReport }: DraftToPublishPackageProps) {
@@ -35,14 +35,14 @@ export function DraftToPublishPackage({ runReport }: DraftToPublishPackageProps)
       <div className="flex flex-wrap items-start justify-between gap-2 border-b border-slate-100 pb-3">
         <div>
           <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700/90">
-            Publish package
+            KAWN Publish Ready
           </p>
           <p className="mt-1 text-xs text-slate-500">
             Workflow snapshot — {formatIsoTimestampUi(runReport.timestamp)}
           </p>
         </div>
         <p className="text-xs tabular-nums text-slate-500">
-          {runReport.posts.length} draft{runReport.posts.length === 1 ? '' : 's'}
+          {runReport.posts.length} KAWN Post Draft{runReport.posts.length === 1 ? '' : 's'}
         </p>
       </div>
 
@@ -160,7 +160,7 @@ export function DraftToPublishPackage({ runReport }: DraftToPublishPackageProps)
 
       <section className="mt-4 border-t border-slate-100 pt-4">
         <h3 className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          Generated posts
+          Generated KAWN Posts
         </h3>
         <div className="mt-3 space-y-4">
           {runReport.posts.map((body, i) => {

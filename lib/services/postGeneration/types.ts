@@ -4,7 +4,7 @@ import type { PostLength } from '@/lib/post-length';
 import type { Tone } from '@/lib/tone';
 
 /**
- * Input for generating LinkedIn drafts (one per selected style).
+ * Input for generating KAWN Post drafts (one per selected style).
  *
  * **Contract:** `facts` is the **only** exclusive set of claims to use — typically the client’s
  * current selection. The server does not merge in other facts from memory, cache, or research APIs.

@@ -3,6 +3,7 @@
  * are candidates for future automation (no scheduling yet).
  */
 
+/** Legacy key prefix (pre–KAWN product name); unchanged so existing browser data still loads. */
 const STORAGE_KEY = 'fact2linkedin-automation-candidates';
 
 export type AutomationCandidatesState = {

@@ -1,5 +1,5 @@
 /**
- * Client-side workflow orchestration for Fact2LinkedIn.
+ * Client-side workflow orchestration for KAWN Content Creator Agent.
  *
  * Responsibilities (UI calls these; they are **not** React components):
  * - **Research** — `runResearchPhase` → `POST /api/facts`

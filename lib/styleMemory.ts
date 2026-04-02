@@ -9,6 +9,7 @@ export type StyleMemory = {
   preferredResearchMode: 'mock' | 'web';
 };
 
+/** Legacy key prefix (pre–KAWN product name); unchanged so existing browser data still loads. */
 const STORAGE_KEY = 'fact2linkedin-style-memory';
 
 export const DEFAULT_STYLE_MEMORY: StyleMemory = {

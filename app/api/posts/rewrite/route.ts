@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { rewriteLinkedInPost } from '@/lib/services/aiPostRewriteService';
+import { rewriteKawnPost } from '@/lib/services/aiPostRewriteService';
 
 /**
  * POST /api/posts/rewrite
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await rewriteLinkedInPost(body);
+  const result = await rewriteKawnPost(body);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

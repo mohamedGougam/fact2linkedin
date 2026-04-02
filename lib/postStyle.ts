@@ -1,5 +1,5 @@
 /**
- * LinkedIn draft archetypes (which templates to generate). Independent of {@link Tone} (voice).
+ * KAWN Post draft archetypes (which templates to generate). Independent of {@link Tone} (voice).
  */
 export type PostStyle =
   | 'professional_insight'

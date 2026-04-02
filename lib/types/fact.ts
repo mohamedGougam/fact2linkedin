@@ -56,7 +56,7 @@ export type AdditionalSourceRef = {
 export type Fact = {
   /** Stable id for this fact (deterministic for web extraction). Omitted in very old saved history. */
   id?: string;
-  /** The sentence used in LinkedIn drafts (the “claim”). */
+  /** The sentence used in KAWN Post drafts (the “claim”). */
   text: string;
   /** Short label for the source (often page title or site name). */
   sourceName: string;

@@ -153,8 +153,8 @@ export function MonitoringPreviewModal({
                 feed generation (today you pick manually; automation could apply rules later).
               </li>
               <li>
-                <span className="font-medium text-slate-800">Drafts</span> — generate LinkedIn-style
-                posts with your tone, length, and one draft per selected style.
+                <span className="font-medium text-slate-800">Drafts</span> — generate KAWN-style
+                posts with your tone, length, and one KAWN Post Draft per selected style.
               </li>
               <li>
                 <span className="font-medium text-slate-800">Optional</span> — content brief, AI
@@ -171,7 +171,7 @@ export function MonitoringPreviewModal({
               <li>A structured fact list with source links and metadata</li>
               <li>A source review list (unique URLs / titles)</li>
               <li>
-                {styles.length} LinkedIn draft{styles.length === 1 ? '' : 's'} (
+                {styles.length} KAWN Post Draft{styles.length === 1 ? '' : 's'} (
                 {styles.map((s) => POST_STYLE_LABELS[s]).join('; ')})
               </li>
               <li>Optional: exported run package / saved history on this device</li>

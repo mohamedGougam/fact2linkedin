@@ -53,6 +53,7 @@ export function summarizeHistoryRun(run: GenerationRun): HistoryRunSummary {
   };
 }
 
+/** Legacy key prefix (pre–KAWN product name); unchanged so existing browser data still loads. */
 const STORAGE_KEY = 'fact2linkedin-generation-history';
 const MAX_RUNS = 40;
 

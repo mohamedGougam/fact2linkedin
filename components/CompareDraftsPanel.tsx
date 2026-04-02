@@ -29,9 +29,9 @@ export function CompareDraftsPanel({
     <div className="rounded-lg border border-indigo-200 bg-indigo-50/40 p-4">
       <div className="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <p className="text-sm font-semibold text-slate-900">Compare drafts</p>
+          <p className="text-sm font-semibold text-slate-900">Compare KAWN Post Drafts</p>
           <p className="text-xs text-slate-600">
-            {sorted.length} posts selected. Edit each draft in the cards above — this view updates
+            {sorted.length} KAWN Posts selected. Edit each draft in the cards above — this view updates
             automatically.
           </p>
         </div>

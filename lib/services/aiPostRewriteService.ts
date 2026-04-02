@@ -1,5 +1,5 @@
 /**
- * Optional AI rewrite of an already-generated LinkedIn post.
+ * Optional AI rewrite of an already-generated KAWN Post draft.
  * Template generation stays the default; this layer only polishes existing text.
  */
 
@@ -45,7 +45,7 @@ function actionToEditGoal(action: PostQuickEditAction): string {
 /**
  * Validates JSON body and runs OpenAI rewrite when configured.
  */
-export async function rewriteLinkedInPost(body: unknown): Promise<RewritePostOutcome> {
+export async function rewriteKawnPost(body: unknown): Promise<RewritePostOutcome> {
   if (!isOpenAiConfigured()) {
     return {
       ok: false,

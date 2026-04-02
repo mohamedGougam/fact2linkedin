@@ -57,7 +57,7 @@ export function deriveSessionWarnings(ctx: SessionWarningContext): SessionWarnin
   if (lowCount > 0) {
     add(
       'low-confidence',
-      `${lowCount} fact${lowCount === 1 ? '' : 's'} ${lowCount === 1 ? 'has' : 'have'} a lower confidence score — worth a quick review before publishing.`
+      `${lowCount} fact${lowCount === 1 ? '' : 's'} ${lowCount === 1 ? 'has' : 'have'} a lower confidence score — worth a quick review before publishing to KAWN.`
     );
   }
 

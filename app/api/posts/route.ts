@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { generateLinkedInPosts } from '@/lib/services/postGenerationService';
+import { generateKawnPosts } from '@/lib/services/postGenerationService';
 
 /**
  * POST /api/posts
@@ -19,7 +19,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const result = await generateLinkedInPosts(body);
+  const result = await generateKawnPosts(body);
 
   if (!result.ok) {
     return NextResponse.json({ error: result.error }, { status: result.status });

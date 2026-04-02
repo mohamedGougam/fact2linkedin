@@ -41,7 +41,7 @@ function validateTopics(raw: string | undefined, count: number): string[] | null
 
 function systemPrompt(): string {
   return [
-    'You are a LinkedIn content strategist.',
+    'You are a KAWN content strategist.',
     'You suggest actionable, specific post topics (not full posts).',
     'Do not invent facts or make claims; these are just topic ideas.',
     'Return JSON only: an array of strings. No markdown, no extra keys.'
@@ -58,7 +58,7 @@ function userPrompt(input: {
   const recent = input.recentTopics.slice(0, 8).map((t) => `- ${t}`).join('\n');
   const cats = input.categories.map((c) => `- ${c}`).join('\n');
   return [
-    'Suggest topic ideas for LinkedIn posts.',
+    'Suggest topic ideas for KAWN Posts.',
     '',
     `Mode: ${input.researchMode}`,
     input.currentTopic.trim() ? `Current typed topic: ${input.currentTopic.trim()}` : 'Current typed topic: (empty)',
@@ -70,7 +70,7 @@ function userPrompt(input: {
     cats || '(none)',
     '',
     `Return exactly ${input.count} topics as a JSON array of strings.`,
-    'Each topic should be specific and immediately usable as a LinkedIn post title.',
+    'Each topic should be specific and immediately usable as a KAWN Post title.',
     'Avoid vague topics like "AI in business" — add an angle, audience, or scenario.'
   ].join('\n');
 }

@@ -32,12 +32,12 @@ export function DraftPackageSummary({
     <div className="rounded-lg border border-slate-200/90 bg-gradient-to-b from-slate-50/90 to-white px-4 py-3 shadow-sm ring-1 ring-slate-900/5">
       <div className="flex flex-wrap items-baseline justify-between gap-2 border-b border-slate-100 pb-2">
         <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
-          Draft package
+          KAWN draft package
         </p>
         <p className="text-xs tabular-nums text-slate-500">
           {postsCount === 0
             ? 'Not generated yet'
-            : `${postsCount} draft${postsCount === 1 ? '' : 's'}`}
+            : `${postsCount} KAWN Post Draft${postsCount === 1 ? '' : 's'}`}
         </p>
       </div>
       <p

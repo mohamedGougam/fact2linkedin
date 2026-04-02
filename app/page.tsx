@@ -710,11 +710,11 @@ export default function HomePage() {
     <main className="mx-auto max-w-4xl px-4 py-8 sm:py-10">
       <header className="mb-8 sm:mb-10">
         <h1 className="text-3xl font-semibold tracking-tight text-slate-900">
-          Fact2LinkedIn
+          KAWN Content Creator Agent
         </h1>
         <p className="mt-2 max-w-2xl text-slate-600">
-          Draft LinkedIn content from a topic: research, review sources, pick facts, generate
-          posts, then export or revisit past runs.
+          Draft KAWN content from a topic: research, review sources, pick facts, generate KAWN
+          Posts, then export or revisit past runs.
         </p>
       </header>
 
@@ -913,7 +913,7 @@ export default function HomePage() {
                 disabled={busy || !canGeneratePosts || postSlotBusy}
                 className="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {postsLoading ? 'Working…' : 'Generate LinkedIn posts'}
+                {postsLoading ? 'Working…' : 'Generate KAWN Posts'}
               </button>
             </div>
             </div>
@@ -922,13 +922,13 @@ export default function HomePage() {
             <ContentBriefPanel brief={brief} loading={briefLoading} error={briefError} />
           </div>
           {hasFacts && !anySelected ? (
-            <p className="mt-3 text-sm text-amber-800">Select at least one fact to generate posts.</p>
+            <p className="mt-3 text-sm text-amber-800">Select at least one fact to generate KAWN Posts.</p>
           ) : null}
         </PageSection>
 
         <PageSection
-          title="Generated LinkedIn posts"
-          description="One draft per selected post style. Edit, regenerate for a new template rotation, or export."
+          title="Generated KAWN Posts"
+          description="One KAWN Post Draft per selected post style. Edit, regenerate for a new template rotation, or export."
         >
           {canRegenerateToolbar ? (
             <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -949,7 +949,7 @@ export default function HomePage() {
                 disabled={busy || postSlotBusy}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {postsLoading ? 'Working…' : 'Regenerate all posts'}
+                {postsLoading ? 'Working…' : 'Regenerate all KAWN Posts'}
               </button>
             </div>
           ) : null}
@@ -978,8 +978,8 @@ export default function HomePage() {
             onToggleCompare={toggleCompareDraft}
             emptyHint={
               hasFacts
-                ? 'Choose tone and length, then click “Generate LinkedIn posts”.'
-                : 'Posts appear here after you load facts and generate.'
+                ? 'Choose tone and length, then click “Generate KAWN Posts”.'
+                : 'KAWN Post Drafts appear here after you load facts and generate.'
             }
           />
           <div className="mt-4">

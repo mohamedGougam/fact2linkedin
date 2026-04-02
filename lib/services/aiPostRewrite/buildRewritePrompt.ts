@@ -6,7 +6,7 @@ import type { Tone } from '@/lib/tone';
 function lengthHint(length: PostLength): string {
   switch (length) {
     case 'short':
-      return 'Keep it concise for LinkedIn (about 1–3 short paragraphs).';
+      return 'Keep it concise for KAWN (about 1–3 short paragraphs).';
     case 'medium':
       return 'Use a medium length (several short paragraphs).';
     case 'long':
@@ -21,7 +21,7 @@ function lengthHint(length: PostLength): string {
  */
 export function rewriteSystemPrompt(): string {
   return [
-    'You are an expert LinkedIn editor.',
+    'You are an expert KAWN content editor.',
     'You improve drafts for clarity, flow, and professional tone.',
     'You must NOT introduce new factual claims, numbers, names, dates, or citations that are not clearly supported by the FACTS list provided in the user message.',
     'If the draft contains something not supported by those facts, remove it or rephrase so it stays faithful to the facts.',
@@ -54,7 +54,7 @@ export function rewriteUserPrompt(input: {
     input.currentPost.trim(),
     '',
     [
-      'Rewrite the draft to read better on LinkedIn while honoring tone, length, and style.',
+      'Rewrite the draft to read better for KAWN publishing while honoring tone, length, and style.',
       input.editGoal ? 'Satisfy the Edit goal above without adding unsupported facts.' : null,
       'Stay faithful to the FACTS above.'
     ]

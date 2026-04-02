@@ -42,7 +42,7 @@ type PostCardProps = {
   postStyleLabel?: string;
 };
 
-/** One LinkedIn-style draft: view / edit, copy, optional single regeneration. */
+/** One KAWN Post Draft: view / edit, copy, optional single regeneration. */
 export function PostCard({
   number,
   text,

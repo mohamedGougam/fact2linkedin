@@ -1,5 +1,5 @@
 /**
- * Deterministic “quick polish” transforms for LinkedIn drafts.
+ * Deterministic “quick polish” transforms for KAWN Post drafts.
  * No external NLP libraries — string splits, regex, and small template phrases.
  *
  * When AI post generation is fully enabled server-side, you can swap the call site
@@ -28,7 +28,7 @@ export const POST_QUICK_EDIT_ACTIONS: ReadonlyArray<{
 function splitSentences(text: string): string[] {
   const t = text.trim();
   if (!t) return [];
-  // Split after . ! ? when followed by space or end (handles most LinkedIn-style prose).
+  // Split after . ! ? when followed by space or end (handles most short-form social prose).
   const raw = t.split(/(?<=[.!?])\s+/);
   return raw.map((s) => s.trim()).filter((s) => s.length > 0);
 }

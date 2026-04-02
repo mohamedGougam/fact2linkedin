@@ -28,6 +28,7 @@ export type WatchlistRecurringRunConfig = {
   >;
 };
 
+/** Legacy key prefix (pre–KAWN product name); unchanged so existing browser data still loads. */
 const STORAGE_KEY = 'fact2linkedin-topic-watchlist';
 const MAX_ITEMS = 30;
 

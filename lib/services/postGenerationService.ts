@@ -24,7 +24,7 @@ const MAX_FACTS_PER_REQUEST = 24;
  * or session state. Post bodies are built only from `fact.text` fields; validated metadata is
  * returned as `factsUsed` for traceability.
  */
-export async function generateLinkedInPosts(body: unknown): Promise<GeneratePostsOutcome> {
+export async function generateKawnPosts(body: unknown): Promise<GeneratePostsOutcome> {
   if (body === null || typeof body !== 'object' || Array.isArray(body)) {
     return {
       ok: false,

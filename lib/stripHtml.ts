@@ -1,5 +1,5 @@
 /**
- * Strip tags from search snippets (e.g. <strong>, <b>) so facts and posts stay plain text for LinkedIn.
+ * Strip tags from search snippets (e.g. <strong>, <b>) so facts and posts stay plain text for KAWN.
  */
 export function stripHtmlTags(input: string): string {
   return input
