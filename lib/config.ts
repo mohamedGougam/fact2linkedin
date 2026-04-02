@@ -36,8 +36,11 @@ export const appConfig = {
 
   postGenerationProvider: postGenerationMode(),
 
-  /** Set when you wire OpenAI; unused in template MVP. */
+  /** Set when you wire OpenAI (post rewrite, future full AI generation). */
   openaiApiKey: readOptional('OPENAI_API_KEY'),
+
+  /** Chat model for rewrite (`gpt-4o-mini` if unset). */
+  openaiModel: readOptional('OPENAI_MODEL') ?? 'gpt-4o-mini',
 
   /** Web search (e.g. Brave Search API). Both required for live web research. */
   searchApiKey: readOptional('SEARCH_API_KEY'),

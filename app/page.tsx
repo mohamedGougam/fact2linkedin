@@ -15,6 +15,7 @@ import { ToneSelect } from '@/components/ToneSelect';
 import type { ResearchModeChoice } from '@/components/ResearchModeSelect';
 import { SourceReviewSection } from '@/components/SourceReviewSection';
 import { TopicForm } from '@/components/TopicForm';
+import { WatchlistPanel } from '@/components/WatchlistPanel';
 import { WarningsPanel } from '@/components/WarningsPanel';
 import { WorkflowIndicator } from '@/components/WorkflowIndicator';
 import { POST_STYLES, type PostStyle } from '@/lib/postStyle';
@@ -32,8 +33,21 @@ import {
 import { deriveSessionWarningsWithExportIssues } from '@/lib/sessionWarnings';
 import { getWorkflowStep } from '@/lib/workflowStep';
 import type { PostLength } from '@/lib/post-length';
+import type { RewritePostApiResponse, TopicSuggestionsApiResponse } from '@/lib/types/api';
 import type { Fact } from '@/lib/types/fact';
 import type { Tone } from '@/lib/tone';
+import {
+  suggestTopicsDeterministic,
+  TOPIC_SUGGESTION_CATEGORIES
+} from '@/lib/topicSuggestions';
+import {
+  addToWatchlist,
+  loadWatchlist,
+  removeFromWatchlist,
+  updateWatchlistRecurring,
+  type WatchlistItem,
+  type WatchlistRecurringRunConfig
+} from '@/lib/watchlistStorage';
 
 export default function HomePage() {
   const [topic, setTopic] = useState('');
@@ -53,6 +67,12 @@ export default function HomePage() {
   const [postsLoading, setPostsLoading] = useState(false);
   /** Which post index is currently regenerating alone (null = none). */
   const [regeneratingPostIndex, setRegeneratingPostIndex] = useState<number | null>(null);
+  /** Which post is running AI improve (null = none). */
+  const [aiImprovingPostIndex, setAiImprovingPostIndex] = useState<number | null>(null);
+  const [aiImproveErrorIndex, setAiImproveErrorIndex] = useState<number | null>(null);
+  const [aiImproveErrorMessage, setAiImproveErrorMessage] = useState<string | null>(null);
+  /** Optional: use AI to assist quick polish buttons (falls back to deterministic). */
+  const [aiAssistQuickPolish, setAiAssistQuickPolish] = useState(false);
   /** Per-slot template bumps so repeated single regens rotate wording. */
   const [slotRegenBumps, setSlotRegenBumps] = useState<number[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -63,21 +83,37 @@ export default function HomePage() {
   );
   const [researchMode, setResearchMode] = useState<ResearchModeChoice>('mock');
   const [historyRuns, setHistoryRuns] = useState<GenerationRun[]>([]);
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+  const [topicSuggestions, setTopicSuggestions] = useState<string[]>([]);
+  const [topicSuggestLoading, setTopicSuggestLoading] = useState(false);
+  const [topicSuggestError, setTopicSuggestError] = useState<string | null>(null);
+  const [topicSuggestUseAi, setTopicSuggestUseAi] = useState(false);
 
   useEffect(() => {
     setHistoryRuns(loadRuns());
+    setWatchlist(loadWatchlist());
   }, []);
 
   const busy = factsLoading || postsLoading;
-  const singlePostRegenBusy = regeneratingPostIndex !== null;
+  /** Any per-post async work (template regen or AI improve). */
+  const postSlotBusy =
+    regeneratingPostIndex !== null || aiImprovingPostIndex !== null;
 
-  async function loadFacts() {
+  async function loadFacts(topicOverride?: string) {
+    const effectiveTopic =
+      typeof topicOverride === 'string' && topicOverride.trim().length > 0
+        ? topicOverride.trim()
+        : topic.trim();
+    if (effectiveTopic !== topic.trim()) {
+      setTopic(effectiveTopic);
+    }
+
     setError(null);
     setResearchInfo(null);
     setResearchPipelineUsed(null);
     setFactsLoading(true);
     try {
-      const result = await runResearchPhase({ topic, researchMode });
+      const result = await runResearchPhase({ topic: effectiveTopic, researchMode });
 
       if (!result.ok) {
         setError(result.error);
@@ -95,6 +131,68 @@ export default function HomePage() {
     } finally {
       setFactsLoading(false);
     }
+  }
+
+  function recentHistoryTopics(): string[] {
+    return historyRuns
+      .map((r) => r.report.topic)
+      .map((t) => t.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
+  async function suggestTopics() {
+    setTopicSuggestError(null);
+    setTopicSuggestLoading(true);
+    try {
+      const recentTopics = recentHistoryTopics();
+      const categories = TOPIC_SUGGESTION_CATEGORIES.map((c) => c.label);
+
+      if (topicSuggestUseAi) {
+        const res = await fetch('/api/topics/suggest', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            currentTopic: topic,
+            researchMode,
+            recentTopics,
+            categories,
+            count: 8
+          })
+        });
+        const json = (await res.json()) as TopicSuggestionsApiResponse;
+        if (res.ok && Array.isArray(json.topics) && json.topics.length > 0) {
+          setTopicSuggestions(json.topics);
+          return;
+        }
+        // Fall back to deterministic suggestions.
+        setTopicSuggestError(
+          json.error ?? 'AI suggestions were not available; showing standard suggestions instead.'
+        );
+      }
+
+      const deterministic = suggestTopicsDeterministic({
+        currentTopic: topic,
+        researchMode,
+        recentTopics,
+        count: 8
+      });
+      setTopicSuggestions(deterministic);
+    } finally {
+      setTopicSuggestLoading(false);
+    }
+  }
+
+  function addWatchTopic(t: string) {
+    setWatchlist(addToWatchlist(t));
+  }
+
+  function removeWatchTopic(id: string) {
+    setWatchlist(removeFromWatchlist(id));
+  }
+
+  function updateWatchTopicRecurring(id: string, recurring: WatchlistRecurringRunConfig | undefined) {
+    setWatchlist(updateWatchlistRecurring(id, recurring));
   }
 
   function toggleFact(index: number) {
@@ -224,6 +322,95 @@ export default function HomePage() {
     }
   }
 
+  async function aiQuickEditPost(
+    index: number,
+    editAction: 'shorter' | 'executive' | 'engaging' | 'remove_hashtags' | 'add_cta',
+    currentText: string
+  ): Promise<string> {
+    const style = postStyles[index];
+    if (!style) {
+      throw new Error('Could not determine post style for this card.');
+    }
+
+    const res = await fetch('/api/posts/rewrite', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        currentPost: currentText,
+        facts: selectedFacts,
+        tone,
+        length,
+        postStyle: style,
+        editAction
+      })
+    });
+
+    const json = (await res.json()) as RewritePostApiResponse;
+    if (!res.ok || !json.post) {
+      const msg =
+        json.error ||
+        (res.status === 503
+          ? 'AI assist is not available on this server.'
+          : 'AI assist failed.');
+      throw new Error(msg);
+    }
+
+    return json.post;
+  }
+
+  async function aiImprovePost(index: number) {
+    const chosen = filterFactsForGeneration(facts, selected);
+    if (
+      chosen.length === 0 ||
+      index < 0 ||
+      index >= posts.length ||
+      index >= postStyles.length
+    ) {
+      return;
+    }
+
+    setAiImproveErrorIndex(null);
+    setAiImproveErrorMessage(null);
+    setAiImprovingPostIndex(index);
+
+    try {
+      const response = await fetch('/api/posts/rewrite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          currentPost: posts[index],
+          facts: chosen,
+          tone,
+          length,
+          postStyle: postStyles[index]
+        })
+      });
+
+      const data = (await response.json()) as RewritePostApiResponse;
+
+      if (!response.ok) {
+        setAiImproveErrorMessage(data.error ?? 'Could not improve this post.');
+        setAiImproveErrorIndex(index);
+        return;
+      }
+
+      const next = data.post;
+      if (typeof next === 'string' && next.trim().length > 0) {
+        updatePost(index, next);
+      } else {
+        setAiImproveErrorMessage('The server returned an empty result. Your draft is unchanged.');
+        setAiImproveErrorIndex(index);
+      }
+    } catch {
+      setAiImproveErrorMessage(
+        'Could not reach the server. Is `npm run dev` running?'
+      );
+      setAiImproveErrorIndex(index);
+    } finally {
+      setAiImprovingPostIndex(null);
+    }
+  }
+
   function updatePost(index: number, nextText: string) {
     setPosts((prev) => {
       const copy = [...prev];
@@ -254,6 +441,9 @@ export default function HomePage() {
     setTemplateVariant(r.generationOptions.templateVariant);
     setSlotRegenBumps(r.posts.map(() => 0));
     setRegeneratingPostIndex(null);
+    setAiImprovingPostIndex(null);
+    setAiImproveErrorIndex(null);
+    setAiImproveErrorMessage(null);
   }
 
   /** Load saved facts and generation settings; clear posts so you can generate new drafts. */
@@ -278,6 +468,9 @@ export default function HomePage() {
     setTemplateVariant(0);
     setSlotRegenBumps([]);
     setRegeneratingPostIndex(null);
+    setAiImprovingPostIndex(null);
+    setAiImproveErrorIndex(null);
+    setAiImproveErrorMessage(null);
   }
 
   const hasFacts = facts.length > 0;
@@ -345,6 +538,70 @@ export default function HomePage() {
             onLoadFacts={loadFacts}
             busy={factsLoading}
           />
+          <div className="mt-4">
+            <WatchlistPanel
+              items={watchlist}
+              currentTopic={topic}
+              onPickTopic={(t) => setTopic(t)}
+              onAddTopic={addWatchTopic}
+              onRemove={removeWatchTopic}
+              onRunResearch={(t) => void loadFacts(t)}
+              onUpdateRecurring={updateWatchTopicRecurring}
+              busy={factsLoading}
+            />
+          </div>
+          <div className="mt-4 rounded-lg border border-slate-200 bg-white p-4">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">Suggest topics</p>
+                <p className="mt-0.5 text-sm text-slate-600">
+                  Quick, actionable ideas you can click to fill the topic box.
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2">
+                <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={topicSuggestUseAi}
+                    onChange={(e) => setTopicSuggestUseAi(e.target.checked)}
+                    disabled={busy || topicSuggestLoading}
+                    className="h-4 w-4 rounded border-slate-300"
+                  />
+                  Use AI (if available)
+                </label>
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={suggestTopics}
+                  disabled={busy || topicSuggestLoading}
+                  className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {topicSuggestLoading ? 'Working…' : 'Suggest topics'}
+                </button>
+              </div>
+            </div>
+            {topicSuggestError ? (
+              <p className="mt-2 text-sm text-amber-800" role="status">
+                {topicSuggestError}
+              </p>
+            ) : null}
+            {topicSuggestions.length > 0 ? (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {topicSuggestions.map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    suppressHydrationWarning
+                    onClick={() => setTopic(t)}
+                    className="rounded-full border border-slate-200 bg-white px-3 py-1 text-sm text-slate-800 hover:bg-slate-50"
+                    title="Click to use this topic"
+                  >
+                    {t}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
           {sessionWarnings.length > 0 ? (
             <div className="mt-4">
               <WarningsPanel warnings={sessionWarnings} />
@@ -395,7 +652,7 @@ export default function HomePage() {
               type="button"
               suppressHydrationWarning
               onClick={generatePosts}
-              disabled={busy || !canGeneratePosts || singlePostRegenBusy}
+              disabled={busy || !canGeneratePosts || postSlotBusy}
               className="shrink-0 rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {postsLoading ? 'Working…' : 'Generate LinkedIn posts'}
@@ -412,12 +669,22 @@ export default function HomePage() {
           description="One draft per selected post style. Edit, regenerate for a new template rotation, or export."
         >
           {canRegenerateToolbar ? (
-            <div className="mb-4 flex justify-end">
+            <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <label className="inline-flex items-center gap-2 text-sm text-slate-700">
+                <input
+                  type="checkbox"
+                  checked={aiAssistQuickPolish}
+                  onChange={(e) => setAiAssistQuickPolish(e.target.checked)}
+                  disabled={busy || postSlotBusy}
+                  className="h-4 w-4 rounded border-slate-300"
+                />
+                AI assist quick polish (optional)
+              </label>
               <button
                 type="button"
                 suppressHydrationWarning
                 onClick={regeneratePosts}
-                disabled={busy || singlePostRegenBusy}
+                disabled={busy || postSlotBusy}
                 className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-1.5 text-sm font-medium text-slate-800 hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {postsLoading ? 'Working…' : 'Regenerate all posts'}
@@ -429,6 +696,14 @@ export default function HomePage() {
             onUpdatePost={updatePost}
             onRegeneratePost={posts.length > 0 ? regenerateSinglePost : undefined}
             regeneratingPostIndex={regeneratingPostIndex}
+            onAiImprovePost={
+              posts.length > 0 && canGeneratePosts ? aiImprovePost : undefined
+            }
+            aiImprovingPostIndex={aiImprovingPostIndex}
+            aiImproveErrorIndex={aiImproveErrorIndex}
+            aiImproveErrorMessage={aiImproveErrorMessage}
+            aiQuickEditsEnabled={aiAssistQuickPolish}
+            onAiQuickEditPost={aiQuickEditPost}
             emptyHint={
               hasFacts
                 ? 'Choose tone and length, then click “Generate LinkedIn posts”.'

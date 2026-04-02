@@ -145,7 +145,8 @@ export async function generateLinkedInPosts(body: unknown): Promise<GeneratePost
   });
 }
 
-function parseFact(item: unknown): Fact | null {
+/** Exported for other services (e.g. AI rewrite) that accept the same client fact JSON. */
+export function parseFact(item: unknown): Fact | null {
   if (item === null || typeof item !== 'object' || Array.isArray(item)) {
     return null;
   }

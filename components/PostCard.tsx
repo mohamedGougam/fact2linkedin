@@ -21,6 +21,16 @@ type PostCardProps = {
   regenerateLocked?: boolean;
   /** True while this card’s regen request is in flight. */
   regenerateWorking?: boolean;
+  /** Optional AI rewrite (server needs `OPENAI_API_KEY`). */
+  onAiImprove?: () => void;
+  /** True while any card is doing AI improve — disables polish / AI until done. */
+  aiImproveLocked?: boolean;
+  aiImproveWorking?: boolean;
+  /** Shown under the post when the last AI improve failed for this card. */
+  aiImproveError?: string | null;
+  /** Optional: AI-assist the quick polish buttons (falls back to deterministic). */
+  aiQuickEditsEnabled?: boolean;
+  onAiQuickEdit?: (action: PostQuickEditAction, currentText: string) => Promise<string>;
 };
 
 /** One LinkedIn-style draft: view / edit, copy, optional single regeneration. */
@@ -30,11 +40,19 @@ export function PostCard({
   onSave,
   onRegenerateThisPost,
   regenerateLocked = false,
-  regenerateWorking = false
+  regenerateWorking = false,
+  onAiImprove,
+  aiImproveLocked = false,
+  aiImproveWorking = false,
+  aiImproveError = null,
+  aiQuickEditsEnabled = false,
+  onAiQuickEdit
 }: PostCardProps) {
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState(text);
   const [copied, setCopied] = useState(false);
+  const [quickAiWorking, setQuickAiWorking] = useState(false);
+  const [quickAiError, setQuickAiError] = useState<string | null>(null);
   const resetTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
@@ -79,18 +97,37 @@ export function PostCard({
     setEditing(false);
   }
 
-  function runQuickEdit(action: PostQuickEditAction) {
+  async function runQuickEdit(action: PostQuickEditAction) {
     const source = editing ? draft : stripHtmlTags(text);
-    const next = applyPostQuickEdit(source, action);
-    if (editing) {
-      setDraft(next);
-    } else {
-      onSave(next);
+    setQuickAiError(null);
+
+    if (aiQuickEditsEnabled && onAiQuickEdit && !aiImproveLocked) {
+      setQuickAiWorking(true);
+      try {
+        const improved = await onAiQuickEdit(action, source);
+        if (editing) setDraft(improved);
+        else onSave(improved);
+        return;
+      } catch (e) {
+        const msg =
+          e instanceof Error ? e.message : 'AI assist failed; used the standard edit instead.';
+        setQuickAiError(msg);
+        // Fall back to deterministic behavior below.
+      } finally {
+        setQuickAiWorking(false);
+      }
     }
+
+    const next = applyPostQuickEdit(source, action);
+    if (editing) setDraft(next);
+    else onSave(next);
   }
 
-  const quickLocked = regenerateLocked;
+  const quickLocked = regenerateLocked || aiImproveLocked || quickAiWorking;
   const regenDisabled = Boolean(onRegenerateThisPost && (regenerateLocked || editing));
+  const aiDisabled = Boolean(
+    onAiImprove && (editing || aiImproveLocked || aiImproveWorking)
+  );
 
   return (
     <article className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
@@ -152,15 +189,32 @@ export function PostCard({
                   {regenerateWorking ? 'Working…' : 'Regenerate this post'}
                 </button>
               ) : null}
+              {onAiImprove ? (
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={onAiImprove}
+                  disabled={aiDisabled}
+                  className="rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-900 shadow-sm hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="Polish with AI using only your selected facts (needs OPENAI_API_KEY on the server)"
+                >
+                  {aiImproveWorking ? 'Improving…' : 'AI improve'}
+                </button>
+              ) : null}
             </>
           )}
         </div>
       </div>
 
       <div className="mb-3 flex flex-col gap-1.5 border-b border-slate-100 pb-3">
-        <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
-          Quick polish
-        </span>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            Quick polish
+          </span>
+          {quickAiWorking ? (
+            <span className="text-[11px] font-medium text-indigo-800">AI…</span>
+          ) : null}
+        </div>
         <div className="flex flex-wrap gap-1.5">
           {POST_QUICK_EDIT_ACTIONS.map(({ id, label }) => (
             <button
@@ -191,6 +245,22 @@ export function PostCard({
           {stripHtmlTags(text)}
         </pre>
       )}
+      {aiImproveError ? (
+        <p
+          className="mt-2 rounded-md border border-amber-200 bg-amber-50/90 px-2 py-1.5 text-xs text-amber-950"
+          role="status"
+        >
+          {aiImproveError}
+        </p>
+      ) : null}
+      {quickAiError ? (
+        <p
+          className="mt-2 rounded-md border border-amber-200 bg-amber-50/90 px-2 py-1.5 text-xs text-amber-950"
+          role="status"
+        >
+          {quickAiError}
+        </p>
+      ) : null}
     </article>
   );
 }

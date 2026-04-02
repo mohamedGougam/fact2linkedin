@@ -22,3 +22,15 @@ export type PostsApiResponse = {
   regenerateStyleIndex?: number;
   error?: string;
 };
+
+/** JSON body from `POST /api/posts/rewrite`. */
+export type RewritePostApiResponse = {
+  post?: string;
+  error?: string;
+};
+
+/** JSON body from `POST /api/topics/suggest`. */
+export type TopicSuggestionsApiResponse = {
+  topics?: string[];
+  error?: string;
+};

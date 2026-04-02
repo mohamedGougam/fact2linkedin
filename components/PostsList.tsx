@@ -1,6 +1,7 @@
 'use client';
 
 import { PostCard } from '@/components/PostCard';
+import type { PostQuickEditAction } from '@/lib/postQuickEdits';
 
 type PostsListProps = {
   posts: string[];
@@ -11,6 +12,20 @@ type PostsListProps = {
   onRegeneratePost?: (index: number) => void;
   /** When set, that slot is loading; all regen buttons stay disabled until cleared. */
   regeneratingPostIndex?: number | null;
+  /** Optional AI rewrite (requires server `OPENAI_API_KEY`). */
+  onAiImprovePost?: (index: number) => void;
+  /** When set, that slot shows “Improving…” for AI. */
+  aiImprovingPostIndex?: number | null;
+  /** Friendly error for the card at this index (if any). */
+  aiImproveErrorIndex?: number | null;
+  aiImproveErrorMessage?: string | null;
+  /** Optional: AI-assist the quick polish buttons (falls back to deterministic). */
+  aiQuickEditsEnabled?: boolean;
+  onAiQuickEditPost?: (
+    index: number,
+    action: PostQuickEditAction,
+    currentText: string
+  ) => Promise<string>;
 };
 
 /** Post cards in a responsive grid; optional per-post regeneration. */
@@ -19,7 +34,13 @@ export function PostsList({
   emptyHint,
   onUpdatePost,
   onRegeneratePost,
-  regeneratingPostIndex = null
+  regeneratingPostIndex = null,
+  onAiImprovePost,
+  aiImprovingPostIndex = null,
+  aiImproveErrorIndex = null,
+  aiImproveErrorMessage = null,
+  aiQuickEditsEnabled = false,
+  onAiQuickEditPost
 }: PostsListProps) {
   if (posts.length === 0) {
     return (
@@ -30,6 +51,8 @@ export function PostsList({
   }
 
   const regenBusy = regeneratingPostIndex !== null;
+  const aiBusy = aiImprovingPostIndex !== null;
+  const polishLocked = regenBusy || aiBusy;
 
   return (
     <div className="grid gap-4 md:grid-cols-3">
@@ -44,6 +67,18 @@ export function PostsList({
           }
           regenerateLocked={regenBusy}
           regenerateWorking={regeneratingPostIndex === i}
+          onAiImprove={
+            onAiImprovePost ? () => onAiImprovePost(i) : undefined
+          }
+          aiImproveLocked={polishLocked}
+          aiImproveWorking={aiImprovingPostIndex === i}
+          aiImproveError={
+            aiImproveErrorIndex === i ? aiImproveErrorMessage : null
+          }
+          aiQuickEditsEnabled={aiQuickEditsEnabled}
+          onAiQuickEdit={
+            onAiQuickEditPost ? (action, currentText) => onAiQuickEditPost(i, action, currentText) : undefined
+          }
         />
       ))}
     </div>
