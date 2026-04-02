@@ -219,6 +219,8 @@ export type HistoryPackageInput = {
   facts: Fact[];
   selectedFacts: Fact[];
   posts: string[];
+  /** Per-slot fact snapshots (same length as `posts`); omit to derive from `selectedFacts` on read. */
+  postFactsUsed?: Fact[][];
   tone: Tone;
   length: PostLength;
   postStyles: PostStyle[];
@@ -257,6 +259,7 @@ export function packageHistoryRun(
     facts: input.facts,
     selectedFacts: input.selectedFacts,
     posts: input.posts,
+    postFactsUsed: input.postFactsUsed,
     generationOptions: {
       tone: input.tone,
       length: input.length,

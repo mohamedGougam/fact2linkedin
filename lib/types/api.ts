@@ -34,3 +34,9 @@ export type TopicSuggestionsApiResponse = {
   topics?: string[];
   error?: string;
 };
+
+/** JSON body from `POST /api/brief`. */
+export type ContentBriefApiResponse = {
+  brief?: string;
+  error?: string;
+};

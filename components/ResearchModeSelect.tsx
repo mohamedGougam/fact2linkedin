@@ -1,6 +1,9 @@
 'use client';
 
-export type ResearchModeChoice = 'mock' | 'web';
+import type { WorkflowResearchMode } from '@/lib/workflowAutomationConfig';
+
+/** Mock vs live web — same union as `WorkflowResearchMode` in `lib/workflowAutomationConfig.ts`. */
+export type ResearchModeChoice = WorkflowResearchMode;
 
 type ResearchModeSelectProps = {
   value: ResearchModeChoice;

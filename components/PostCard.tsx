@@ -7,6 +7,8 @@ import {
   type PostQuickEditAction
 } from '@/lib/postQuickEdits';
 import { stripHtmlTags } from '@/lib/stripHtml';
+import { PostSourcesModal } from '@/components/PostSourcesModal';
+import type { Fact } from '@/lib/types/fact';
 
 type PostCardProps = {
   /** 1-based label for the card. */
@@ -31,6 +33,13 @@ type PostCardProps = {
   /** Optional: AI-assist the quick polish buttons (falls back to deterministic). */
   aiQuickEditsEnabled?: boolean;
   onAiQuickEdit?: (action: PostQuickEditAction, currentText: string) => Promise<string>;
+  /** Optional: mark this draft for side-by-side comparison. */
+  compareSelected?: boolean;
+  onCompareChange?: (selected: boolean) => void;
+  /** Facts used when this draft was generated (traceability). */
+  sourcesFacts?: Fact[];
+  /** Style label for the sources dialog (e.g. “Professional insight”). */
+  postStyleLabel?: string;
 };
 
 /** One LinkedIn-style draft: view / edit, copy, optional single regeneration. */
@@ -46,9 +55,14 @@ export function PostCard({
   aiImproveWorking = false,
   aiImproveError = null,
   aiQuickEditsEnabled = false,
-  onAiQuickEdit
+  onAiQuickEdit,
+  compareSelected = false,
+  onCompareChange,
+  sourcesFacts = [],
+  postStyleLabel
 }: PostCardProps) {
   const [editing, setEditing] = useState(false);
+  const [sourcesOpen, setSourcesOpen] = useState(false);
   const [draft, setDraft] = useState(text);
   const [copied, setCopied] = useState(false);
   const [quickAiWorking, setQuickAiWorking] = useState(false);
@@ -130,12 +144,27 @@ export function PostCard({
   );
 
   return (
-    <article className="flex flex-col rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
-      <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-          Sample post {number}
-        </h3>
-        <div className="flex shrink-0 flex-wrap gap-1.5">
+    <article className="flex min-w-0 flex-col overflow-hidden rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+      <div className="mb-2 flex min-w-0 flex-col gap-2">
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+            Sample post {number}
+          </h3>
+          {onCompareChange ? (
+            <label className="inline-flex cursor-pointer items-center gap-1.5 text-xs font-medium text-slate-600">
+              <input
+                type="checkbox"
+                checked={compareSelected}
+                onChange={(e) => onCompareChange(e.target.checked)}
+                disabled={editing}
+                className="h-3.5 w-3.5 rounded border-slate-300"
+                suppressHydrationWarning
+              />
+              Compare
+            </label>
+          ) : null}
+        </div>
+        <div className="flex min-w-0 flex-wrap gap-1.5">
           {editing ? (
             <>
               <button
@@ -201,6 +230,19 @@ export function PostCard({
                   {aiImproveWorking ? 'Improving…' : 'AI improve'}
                 </button>
               ) : null}
+              {sourcesFacts.length > 0 ? (
+                <button
+                  type="button"
+                  suppressHydrationWarning
+                  onClick={() => setSourcesOpen(true)}
+                  disabled={editing}
+                  className="rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 shadow-sm hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  title="View sources behind this post"
+                  aria-label="View sources behind this post"
+                >
+                  View sources
+                </button>
+              ) : null}
             </>
           )}
         </div>
@@ -261,6 +303,16 @@ export function PostCard({
           {quickAiError}
         </p>
       ) : null}
+      <PostSourcesModal
+        open={sourcesOpen}
+        onClose={() => setSourcesOpen(false)}
+        facts={sourcesFacts}
+        postLabel={
+          postStyleLabel
+            ? `Post ${number} · ${postStyleLabel}`
+            : `Post ${number}`
+        }
+      />
     </article>
   );
 }

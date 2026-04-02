@@ -1,5 +1,7 @@
 'use client';
 
+import { AutomationCandidateIndicator } from '@/components/AutomationCandidateIndicator';
+import { formatIsoTimestampUi } from '@/lib/formatIsoTimestamp';
 import {
   summarizeHistoryRun,
   type GenerationRun
@@ -9,10 +11,19 @@ type HistoryPanelProps = {
   runs: GenerationRun[];
   onRestoreFull: (run: GenerationRun) => void;
   onReuseFacts: (run: GenerationRun) => void;
+  /** Saved run ids flagged for future automation (local only). */
+  automationRunIds: string[];
+  onToggleAutomationCandidate: (runId: string) => void;
 };
 
 /** Past generations from localStorage: compact summaries and restore options. */
-export function HistoryPanel({ runs, onRestoreFull, onReuseFacts }: HistoryPanelProps) {
+export function HistoryPanel({
+  runs,
+  onRestoreFull,
+  onReuseFacts,
+  automationRunIds,
+  onToggleAutomationCandidate
+}: HistoryPanelProps) {
   if (runs.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-200 bg-slate-50/50 px-4 py-5 text-sm text-slate-500">
@@ -27,6 +38,8 @@ export function HistoryPanel({ runs, onRestoreFull, onReuseFacts }: HistoryPanel
         <HistoryRunRow
           key={run.id}
           run={run}
+          automationOn={automationRunIds.includes(run.id)}
+          onToggleAutomation={() => onToggleAutomationCandidate(run.id)}
           onRestoreFull={() => onRestoreFull(run)}
           onReuseFacts={() => onReuseFacts(run)}
         />
@@ -37,26 +50,33 @@ export function HistoryPanel({ runs, onRestoreFull, onReuseFacts }: HistoryPanel
 
 function HistoryRunRow({
   run,
+  automationOn,
+  onToggleAutomation,
   onRestoreFull,
   onReuseFacts
 }: {
   run: GenerationRun;
+  automationOn: boolean;
+  onToggleAutomation: () => void;
   onRestoreFull: () => void;
   onReuseFacts: () => void;
 }) {
   const s = summarizeHistoryRun(run);
-  const when = formatWhen(s.timestamp);
+  const when = formatIsoTimestampUi(s.timestamp);
 
   return (
     <li className="group rounded-lg border border-slate-200 bg-white shadow-sm ring-1 ring-slate-900/5 transition hover:border-slate-300 hover:shadow-md">
       <div className="flex flex-col gap-3 p-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
         <div className="min-w-0 flex-1 border-l-4 border-indigo-400 pl-3">
-          <p
-            className="truncate text-sm font-semibold text-slate-900"
-            title={s.topic || undefined}
-          >
-            {s.topic.trim() ? s.topic : '(no topic)'}
-          </p>
+          <div className="flex min-w-0 items-center gap-2">
+            {automationOn ? <AutomationCandidateIndicator /> : null}
+            <p
+              className="min-w-0 truncate text-sm font-semibold text-slate-900"
+              title={s.topic || undefined}
+            >
+              {s.topic.trim() ? s.topic : '(no topic)'}
+            </p>
+          </div>
           <p className="mt-1 text-xs tabular-nums text-slate-500">{when}</p>
           <div className="mt-2.5 flex flex-wrap gap-x-2 gap-y-1.5 text-[11px] leading-tight text-slate-700">
             <StatPill
@@ -90,6 +110,19 @@ function HistoryRunRow({
           </div>
         </div>
         <div className="flex shrink-0 flex-col gap-1.5 sm:items-end">
+          <button
+            type="button"
+            suppressHydrationWarning
+            onClick={onToggleAutomation}
+            className={
+              automationOn
+                ? 'rounded-md border border-violet-300 bg-violet-50 px-3 py-1.5 text-xs font-medium text-violet-900 hover:bg-violet-100'
+                : 'rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50'
+            }
+            title="Flag this saved run as a candidate for future automation (stored locally)"
+          >
+            Auto candidate
+          </button>
           <button
             type="button"
             suppressHydrationWarning
@@ -134,15 +167,3 @@ function StatPill({
   );
 }
 
-function formatWhen(iso: string): string {
-  try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return iso;
-    return d.toLocaleString(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short'
-    });
-  } catch {
-    return iso;
-  }
-}

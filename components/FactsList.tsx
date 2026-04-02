@@ -1,5 +1,7 @@
 import { ConfidenceBadge } from '@/components/ConfidenceBadge';
+import { FreshnessBadge } from '@/components/FreshnessBadge';
 import { getFactDisplayOrder } from '@/lib/factDisplayOrder';
+import { classifyFreshness } from '@/lib/sourceFreshness';
 import { HIGH_CONFIDENCE_THRESHOLD } from '@/lib/factSelection';
 import { describeConfidenceFactors } from '@/lib/services/research/factConfidence';
 import type { Fact, FactVerificationStatus, SourceCategory, SourceType } from '@/lib/types/fact';
@@ -108,6 +110,7 @@ export function FactsList({
                   <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                     <p className="leading-relaxed text-slate-900">{fact.text}</p>
                     <div className="flex shrink-0 flex-wrap items-center gap-2 sm:mt-0.5">
+                      <FreshnessBadge category={classifyFreshness(fact.publishedAt)} />
                       <ConfidenceBadge
                         score={fact.confidence}
                         detail={describeConfidenceFactors(fact)}
@@ -145,6 +148,7 @@ function SourceMetaBlock({ fact }: { fact: Fact }) {
   const title = (fact.sourceTitle?.trim() || fact.sourceName).trim();
   const host = safeHostname(fact.sourceUrl);
   const publisherLine = fact.publisher?.trim() || host;
+  const freshness = classifyFreshness(fact.publishedAt);
 
   return (
     <div className="rounded-lg border border-slate-100 bg-slate-50/90 px-3 py-3">
@@ -186,6 +190,15 @@ function SourceMetaBlock({ fact }: { fact: Fact }) {
             Source type
           </dt>
           <dd className="mt-1 capitalize text-slate-800">{formatSourceType(fact.sourceType)}</dd>
+        </div>
+
+        <div>
+          <dt className="text-[11px] font-medium uppercase tracking-wide text-slate-500">
+            Freshness
+          </dt>
+          <dd className="mt-1">
+            <FreshnessBadge category={freshness} />
+          </dd>
         </div>
 
         <div>

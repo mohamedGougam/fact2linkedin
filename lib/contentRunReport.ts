@@ -59,10 +59,17 @@ export type ContentRunReport = {
   selectedFacts: Fact[];
   /** Generated post bodies (same order as `generationOptions.postStyles`). */
   posts: string[];
+  /**
+   * Facts snapshot used to build each post (same index as `posts`).
+   * When omitted (older saves), treat {@link selectedFacts} as the set used for every slot.
+   */
+  postFactsUsed?: Fact[][];
   generationOptions: GenerationOptionsSnapshot;
   /** When the run completed (ISO 8601). */
   timestamp: string;
   issues: RunIssue[];
+  /** Optional content brief generated in-session (not always in older saves). */
+  contentBrief?: string;
 };
 
 /** Match facts for restore when object identity may differ (e.g. after JSON round-trip). */
@@ -108,12 +115,18 @@ export function buildSessionContentRunReport(input: {
   facts: Fact[];
   selectedFacts: Fact[];
   posts: string[];
+  postFactsUsed?: Fact[][];
   generationOptions: GenerationOptionsSnapshot;
   /** Defaults to now. */
   timestamp?: string;
   issues?: RunIssue[];
+  contentBrief?: string | null;
 }): ContentRunReport {
   const ts = input.timestamp ?? new Date().toISOString();
+  const brief =
+    typeof input.contentBrief === 'string' && input.contentBrief.trim().length > 0
+      ? input.contentBrief.trim()
+      : undefined;
   return {
     topic: input.topic,
     researchMode: input.researchMode,
@@ -126,8 +139,19 @@ export function buildSessionContentRunReport(input: {
     facts: input.facts,
     selectedFacts: input.selectedFacts,
     posts: input.posts,
+    postFactsUsed: input.postFactsUsed,
     generationOptions: input.generationOptions,
     timestamp: ts,
-    issues: input.issues ?? []
+    issues: input.issues ?? [],
+    contentBrief: brief
   };
+}
+
+/** Facts tied to a post slot; falls back to the run’s selected facts for older reports. */
+export function factsForPostSlot(report: ContentRunReport, postIndex: number): Fact[] {
+  const per = report.postFactsUsed;
+  if (per && per[postIndex] && per[postIndex].length > 0) {
+    return per[postIndex];
+  }
+  return report.selectedFacts;
 }

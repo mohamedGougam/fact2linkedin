@@ -183,6 +183,14 @@ function isContentRunReportShape(rep: Record<string, unknown>): boolean {
   if (!Array.isArray(rep.facts)) return false;
   if (!Array.isArray(rep.selectedFacts)) return false;
   if (!Array.isArray(rep.posts)) return false;
+  if (rep.postFactsUsed !== undefined) {
+    if (!Array.isArray(rep.postFactsUsed) || rep.postFactsUsed.length !== rep.posts.length) {
+      return false;
+    }
+    for (const row of rep.postFactsUsed) {
+      if (!Array.isArray(row)) return false;
+    }
+  }
   const go = rep.generationOptions;
   if (go === null || typeof go !== 'object') return false;
   const g = go as Record<string, unknown>;
@@ -191,6 +199,13 @@ function isContentRunReportShape(rep: Record<string, unknown>): boolean {
   if (typeof g.templateVariant !== 'number' || !Number.isFinite(g.templateVariant)) return false;
   if (typeof rep.timestamp !== 'string') return false;
   if (!isIssuesArray(rep.issues)) return false;
+  if (
+    rep.contentBrief !== undefined &&
+    rep.contentBrief !== null &&
+    typeof rep.contentBrief !== 'string'
+  ) {
+    return false;
+  }
   return true;
 }
 

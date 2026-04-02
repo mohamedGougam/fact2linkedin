@@ -1,4 +1,6 @@
+import { FreshnessBadge } from '@/components/FreshnessBadge';
 import { uniqueSourcesFromFacts, type SourceReviewRow } from '@/lib/sourcesFromFacts';
+import { classifyFreshness } from '@/lib/sourceFreshness';
 import type { Fact, SourceType } from '@/lib/types/fact';
 
 type SourceReviewSectionProps = {
@@ -39,10 +41,15 @@ export function SourceReviewSection({ facts, className = '' }: SourceReviewSecti
 }
 
 function SourceRow({ row }: { row: SourceReviewRow }) {
+  const freshness = classifyFreshness(row.publishedAt);
+
   return (
     <li className="grid gap-1 py-3 first:pt-2 sm:grid-cols-[1fr_auto] sm:items-start sm:gap-x-4">
       <div className="min-w-0 space-y-1">
-        <p className="font-medium leading-snug text-slate-900">{row.title}</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="min-w-0 flex-1 font-medium leading-snug text-slate-900">{row.title}</p>
+          <FreshnessBadge category={freshness} />
+        </div>
         <p className="text-xs text-slate-500">
           <span className="text-slate-500">{formatSourceType(row.sourceType)}</span>
           <span className="mx-1.5 text-slate-300" aria-hidden>

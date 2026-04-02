@@ -10,6 +10,9 @@ import type {
   WatchlistFrequency,
   WatchlistRecurringRunConfig
 } from '@/lib/watchlistStorage';
+import { AutomationCandidateIndicator } from '@/components/AutomationCandidateIndicator';
+import { MonitoringPreviewModal } from '@/components/MonitoringPreviewModal';
+import type { SessionWorkflowDefaults } from '@/lib/workflowAutomationConfig';
 
 type WatchlistPanelProps = {
   items: WatchlistItem[];
@@ -19,6 +22,11 @@ type WatchlistPanelProps = {
   onRemove: (id: string) => void;
   onRunResearch: (topic: string) => void;
   onUpdateRecurring: (id: string, recurring: WatchlistRecurringRunConfig | undefined) => void;
+  /** Watchlist item ids flagged for future automation (local only). */
+  automationWatchlistIds: string[];
+  onToggleAutomationCandidate: (id: string) => void;
+  /** Resolves “use current” in the monitoring preview. */
+  sessionDefaults: SessionWorkflowDefaults;
   busy?: boolean;
 };
 
@@ -30,15 +38,23 @@ export function WatchlistPanel({
   onRemove,
   onRunResearch,
   onUpdateRecurring,
+  automationWatchlistIds,
+  onToggleAutomationCandidate,
+  sessionDefaults,
   busy = false
 }: WatchlistPanelProps) {
   const [newTopic, setNewTopic] = useState('');
   const [openPrefsId, setOpenPrefsId] = useState<string | null>(null);
+  const [previewItem, setPreviewItem] = useState<WatchlistItem | null>(null);
 
   const canAddCurrent = currentTopic.trim().length > 0;
   const canAddNew = newTopic.trim().length > 0;
 
   const sorted = useMemo(() => items, [items]);
+  const automationSet = useMemo(
+    () => new Set(automationWatchlistIds),
+    [automationWatchlistIds]
+  );
 
   return (
     <div className="rounded-lg border border-slate-200 bg-white p-4">
@@ -98,16 +114,19 @@ export function WatchlistPanel({
             <li key={it.id} className="rounded-md border border-slate-200 bg-white">
               <div className="flex flex-col gap-2 px-3 py-2 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 flex-1 flex-col gap-1">
-                  <button
-                    type="button"
-                    suppressHydrationWarning
-                    onClick={() => onPickTopic(it.topic)}
-                    disabled={busy}
-                    className="truncate text-left text-sm font-medium text-slate-900 hover:underline"
-                    title="Click to use this topic in the research input"
-                  >
-                    {it.topic}
-                  </button>
+                  <div className="flex min-w-0 items-center gap-2">
+                    {automationSet.has(it.id) ? <AutomationCandidateIndicator /> : null}
+                    <button
+                      type="button"
+                      suppressHydrationWarning
+                      onClick={() => onPickTopic(it.topic)}
+                      disabled={busy}
+                      className="min-w-0 truncate text-left text-sm font-medium text-slate-900 hover:underline"
+                      title="Click to use this topic in the research input"
+                    >
+                      {it.topic}
+                    </button>
+                  </div>
                   {it.recurring ? (
                     <p className="text-[11px] text-slate-600">
                       Prefs: {formatPrefsSummary(it.recurring)}
@@ -117,6 +136,16 @@ export function WatchlistPanel({
                   )}
                 </div>
                 <div className="flex flex-wrap gap-1.5 sm:justify-end">
+                  <button
+                    type="button"
+                    suppressHydrationWarning
+                    onClick={() => setPreviewItem(it)}
+                    disabled={busy}
+                    className="rounded-md border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-medium text-indigo-900 hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50"
+                    title="See what a future automated run would look like (preview only)"
+                  >
+                    Preview monitoring run
+                  </button>
                   <button
                     type="button"
                     suppressHydrationWarning
@@ -138,6 +167,20 @@ export function WatchlistPanel({
                     title="Use this topic and load facts"
                   >
                     Run research
+                  </button>
+                  <button
+                    type="button"
+                    suppressHydrationWarning
+                    onClick={() => onToggleAutomationCandidate(it.id)}
+                    disabled={busy}
+                    className={
+                      automationSet.has(it.id)
+                        ? 'rounded-md border border-violet-300 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-900 hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-50'
+                        : 'rounded-md border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50'
+                    }
+                    title="Flag this topic as a candidate for future automation (stored locally)"
+                  >
+                    Auto
                   </button>
                   <button
                     type="button"
@@ -164,6 +207,13 @@ export function WatchlistPanel({
           ))}
         </ul>
       )}
+
+      <MonitoringPreviewModal
+        open={previewItem !== null}
+        onClose={() => setPreviewItem(null)}
+        item={previewItem}
+        sessionDefaults={sessionDefaults}
+      />
     </div>
   );
 }

@@ -68,6 +68,10 @@ export function buildPlainTextExportFromReport(
     ''
   ];
 
+  if (report.contentBrief?.trim()) {
+    lines.push('CONTENT BRIEF', TXT_SINGLE, report.contentBrief.trim(), '');
+  }
+
   if (report.issues.length > 0) {
     lines.push('ISSUES & WARNINGS', TXT_SINGLE, ...formatIssuesPlain(report.issues), '');
   }
@@ -148,6 +152,19 @@ export function buildMarkdownExportFromReport(
       ' |',
     ''
   );
+
+  if (report.contentBrief?.trim()) {
+    lines.push(
+      '---',
+      '',
+      '## Content brief',
+      '',
+      '```text',
+      report.contentBrief.trim(),
+      '```',
+      ''
+    );
+  }
 
   if (report.issues.length > 0) {
     lines.push('---', '', '## Issues & warnings', '', ...formatIssuesMarkdown(report.issues), '');

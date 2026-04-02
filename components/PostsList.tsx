@@ -2,9 +2,14 @@
 
 import { PostCard } from '@/components/PostCard';
 import type { PostQuickEditAction } from '@/lib/postQuickEdits';
+import type { Fact } from '@/lib/types/fact';
+import { POST_STYLE_LABELS, type PostStyle } from '@/lib/postStyle';
 
 type PostsListProps = {
   posts: string[];
+  /** Facts snapshot used when each post was generated (same indices as `posts`). */
+  postFactsUsed: Fact[][];
+  postStyles: PostStyle[];
   emptyHint: string;
   /** Update one post in parent state (index + new body). */
   onUpdatePost: (index: number, nextText: string) => void;
@@ -26,11 +31,16 @@ type PostsListProps = {
     action: PostQuickEditAction,
     currentText: string
   ) => Promise<string>;
+  /** Indices selected for compare view (2+). */
+  compareIndices?: number[];
+  onToggleCompare?: (index: number, selected: boolean) => void;
 };
 
 /** Post cards in a responsive grid; optional per-post regeneration. */
 export function PostsList({
   posts,
+  postFactsUsed,
+  postStyles,
   emptyHint,
   onUpdatePost,
   onRegeneratePost,
@@ -40,7 +50,9 @@ export function PostsList({
   aiImproveErrorIndex = null,
   aiImproveErrorMessage = null,
   aiQuickEditsEnabled = false,
-  onAiQuickEditPost
+  onAiQuickEditPost,
+  compareIndices = [],
+  onToggleCompare
 }: PostsListProps) {
   if (posts.length === 0) {
     return (
@@ -53,14 +65,19 @@ export function PostsList({
   const regenBusy = regeneratingPostIndex !== null;
   const aiBusy = aiImprovingPostIndex !== null;
   const polishLocked = regenBusy || aiBusy;
+  const compareSet = new Set(compareIndices);
 
   return (
-    <div className="grid gap-4 md:grid-cols-3">
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
       {posts.map((text, i) => (
         <PostCard
           key={i}
           number={i + 1}
           text={text}
+          sourcesFacts={postFactsUsed[i] ?? []}
+          postStyleLabel={
+            postStyles[i] ? POST_STYLE_LABELS[postStyles[i]] : undefined
+          }
           onSave={(next) => onUpdatePost(i, next)}
           onRegenerateThisPost={
             onRegeneratePost ? () => onRegeneratePost(i) : undefined
@@ -78,6 +95,10 @@ export function PostsList({
           aiQuickEditsEnabled={aiQuickEditsEnabled}
           onAiQuickEdit={
             onAiQuickEditPost ? (action, currentText) => onAiQuickEditPost(i, action, currentText) : undefined
+          }
+          compareSelected={compareSet.has(i)}
+          onCompareChange={
+            onToggleCompare ? (selected) => onToggleCompare(i, selected) : undefined
           }
         />
       ))}
